@@ -24,49 +24,68 @@ $(document).ready(function() {
     var t456 = MasterPlan({ "ability": [4, 7, 6, 7, 4, 8, 3], "type": 24}, "#mission_table_456", 10)
     var t457 = MasterPlan({ "ability": [1, 2, 6, 3, 9, 10, 8], "type": 11}, "#mission_table_457", 10)
 
-    var party = []
-    for (var i = 0; t454[i][0] >= 690; i++) {
-        for (var j = 0; t455[j][0] >= 690; j++) {
-            for (var k = 0; t456[k][0] >= 690; k++) {
-                for (var l = 0; t457[l][0] >= 690; l++) {
+    var best_list = []
+    var best = 999
+    for (var i = 0; t454[i].score >= 690; i++) {
+        for (var j = 0; t455[j].score >= 690; j++) {
+            for (var k = 0; t456[k].score >= 690; k++) {
+                for (var l = 0; t457[l].score >= 690; l++) {
                     var o = {}
-                    o[t454[i][1]] = 1;
-                    o[t454[i][2]] = 1;
-                    o[t454[i][3]] = 1;
+                    o[t454[i].party[0]] = 1;
+                    o[t454[i].party[1]] = 1;
+                    o[t454[i].party[2]] = 1;
                     
-                    o[t455[j][1]] = 1;
-                    o[t455[j][2]] = 1;
-                    o[t455[j][3]] = 1;
+                    o[t455[j].party[0]] = 1;
+                    o[t455[j].party[1]] = 1;
+                    o[t455[j].party[2]] = 1;
                     
-                    o[t456[k][1]] = 1;
-                    o[t456[k][2]] = 1;
-                    o[t456[k][3]] = 1;
+                    o[t456[k].party[0]] = 1;
+                    o[t456[k].party[1]] = 1;
+                    o[t456[k].party[2]] = 1;
                     
-                    o[t457[l][1]] = 1;
-                    o[t457[l][2]] = 1;
-                    o[t457[l][3]] = 1;
+                    o[t457[l].party[0]] = 1;
+                    o[t457[l].party[1]] = 1;
+                    o[t457[l].party[2]] = 1;
 
                     var keys = Object.keys(o)
-                    if (party.length == 0) {
-                        party.push(keys)
-                    } else if (keys.length == party[0].length) {
-                        party.push(keys)
-                    } else if (keys.length < party[0].length) {
-                        party = [keys]
+                    var elements = [
+                        t454[i].element, 
+                        t455[j].element, 
+                        t456[k].element, 
+                        t457[l].element] 
+                    if (keys.length < best) {
+                        best = keys.length
+                        best_list = []
+                    }
+                    if (keys.length <= best) {
+                        best_list.push({"party": keys, "element": elements})
                     }
                 }
             }
         }
     }
-    $.each(party, function(i, p) {
+    $.each(best_list, function(i, p) {
         var tr = $("<tr>")
-        $.each(p, function(j, x) {
+        $.each(p.party, function(j, x) {
             var td = $("<td>")
             td.append(CreateFollowerTooltip(my_followers[x]))
             tr.append(td)
         })
+
+        $(tr).hover(
+            function(){ $.each(p.element, function(i, e) { e.addClass("highlight") }) },
+            function(){ $.each(p.element, function(i, e) { e.removeClass("highlight") }) }
+        )
+
+        $.each(p.element, function(i, e) { e.addClass("used") })
+       
         $("#minimal_party").append(tr)
     })
+
+    $("tr:not(.used)", "#mission_table_454").hide()
+    $("tr:not(.used)", "#mission_table_455").hide()
+    $("tr:not(.used)", "#mission_table_456").hide()
+    $("tr:not(.used)", "#mission_table_457").hide()
 })
 
 function MasterPlan(mission, output_table, limit) {
@@ -79,23 +98,25 @@ function MasterPlan(mission, output_table, limit) {
                     { "ability": mission.ability.slice(0), "type": mission.type},
                     [my_followers[i], my_followers[j], my_followers[k]]
                 )
-                result.push([score, i, j, k])
+                result.push({"score": score, "party": [i, j, k]})
             }
         }
     }
 
-    filtered = result.sort(function(x, y) { return y[0] - x[0] })
-        .filter(function(x) {return x[0] >= 690})
-   
-    $.each(filtered, function(index, r) {
+    result.sort(function(x, y) { return y.score - x.score })
+
+    for (var i = 0; i < result.length; i++) {
+        var r = result[i]
+        if (r.score < 690) break
         var tr = $("<tr>")
-        tr.append("<td>" + (r[0] * 100 / 720).toFixed(2) + "%</td>")
-            .append($("<td>").text(r[0]))
-            .append($("<td>").append(CreateFollowerTooltip(my_followers[r[1]])))
-            .append($("<td>").append(CreateFollowerTooltip(my_followers[r[2]])))
-            .append($("<td>").append(CreateFollowerTooltip(my_followers[r[3]])))
+        tr.append("<td>" + (r.score * 100 / 720).toFixed(2) + "%</td>")
+            .append($("<td>").text(r.score))
+            .append($("<td>").append(CreateFollowerTooltip(my_followers[r.party[0]])))
+            .append($("<td>").append(CreateFollowerTooltip(my_followers[r.party[1]])))
+            .append($("<td>").append(CreateFollowerTooltip(my_followers[r.party[2]])))
         $(output_table).append(tr)
-    })
+        result[i].element = tr
+    }
 
     return result
 }
