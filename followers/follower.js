@@ -1,4 +1,4 @@
-[
+my_followers = [
 {"garrFollowerID":34,"quality":4,"level":100,"portraitIconID":1066111,"status":"","ability":[{"id":100,"counter":[1]},{"id":59,"counter":[]},{"id":77,"counter":[]},{"id":6,"counter":[2]},{"id":37,"counter":[15]}]},
 {"garrFollowerID":153,"quality":4,"level":100,"portraitIconID":1066122,"status":"","ability":[{"id":159,"counter":[2]},{"id":60,"counter":[]},{"id":236,"counter":[]},{"id":105,"counter":[8]},{"id":79,"counter":[]}]},
 {"garrFollowerID":182,"quality":4,"level":100,"portraitIconID":1066106,"status":"","ability":[{"id":164,"counter":[2]},{"id":103,"counter":[10]},{"id":9,"counter":[22]},{"id":39,"counter":[20]},{"id":38,"counter":[12]}]},
