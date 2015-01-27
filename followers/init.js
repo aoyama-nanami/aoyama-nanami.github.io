@@ -15,51 +15,36 @@ function CreateFollowerTooltip(follower) {
 
     var span = $("<span></span>")
 
-    return span.append(img).append(a).append("<br/>")
+    return span.append(img).append(a)
 }
 
 $(document).ready(function() {
     var start_time = new Date().getTime()
 
-    var t454 = MasterPlan({ "ability": [6, 3, 10, 1, 2, 9, 7], "type": 18}, "#mission_table_454", 10)
-    var t455 = MasterPlan({ "ability": [2, 6, 1, 3, 3, 10, 8], "type": 21}, "#mission_table_455", 10)
-    var t456 = MasterPlan({ "ability": [4, 7, 6, 7, 4, 8, 3], "type": 24}, "#mission_table_456", 10)
-    var t457 = MasterPlan({ "ability": [1, 2, 6, 3, 9, 10, 8], "type": 11}, "#mission_table_457", 10)
+    var t454 = MasterPlan({ "ability": [6, 3, 10, 1, 2, 9, 7], "type": 18 }, "#mission_table_454", 10)
+    var t455 = MasterPlan({ "ability": [2, 6, 1, 3, 3, 10, 8], "type": 21 }, "#mission_table_455", 10)
+    var t456 = MasterPlan({ "ability": [4, 7, 6, 7, 4, 8, 3], "type": 24 }, "#mission_table_456", 10)
+    var t457 = MasterPlan({ "ability": [1, 2, 6, 3, 9, 10, 8], "type": 11 }, "#mission_table_457", 10)
 
     var best_list = []
-    var best = 999
-    for (var i = 0; t454[i].score >= 690; i++) {
-        for (var j = 0; t455[j].score >= 690; j++) {
-            for (var k = 0; t456[k].score >= 690; k++) {
-                for (var l = 0; t457[l].score >= 690; l++) {
-                    var o = {}
-                    o[t454[i].party[0]] = 1;
-                    o[t454[i].party[1]] = 1;
-                    o[t454[i].party[2]] = 1;
-                    
-                    o[t455[j].party[0]] = 1;
-                    o[t455[j].party[1]] = 1;
-                    o[t455[j].party[2]] = 1;
-                    
-                    o[t456[k].party[0]] = 1;
-                    o[t456[k].party[1]] = 1;
-                    o[t456[k].party[2]] = 1;
-                    
-                    o[t457[l].party[0]] = 1;
-                    o[t457[l].party[1]] = 1;
-                    o[t457[l].party[2]] = 1;
-
-                    var keys = Object.keys(o)
-                    var elements = [
-                        t454[i].element, 
-                        t455[j].element, 
-                        t456[k].element, 
-                        t457[l].element] 
-                    if (keys.length < best) {
-                        best = keys.length
+    var best = 9999999
+    for (var i = 0; i < t454.length; i++) {
+        for (var j = 0; j < t455.length; j++) {
+            for (var k = 0; k < t456.length; k++) {
+                for (var l = 0; l < t457.length; l++) {
+                    var result = CombineParty([t454[i], t455[j], t456[k], t457[l]], my_followers, 660, 670)
+                    var keys = result[0]
+                    var score = result[1]
+                    if (score < best) {
+                        best = score
                         best_list = []
                     }
-                    if (keys.length <= best) {
+                    if (score <= best) {
+                        var elements = [
+                            t454[i].element, 
+                            t455[j].element, 
+                            t456[k].element, 
+                            t457[l].element] 
                         best_list.push({"party": keys, "element": elements})
                     }
                 }
@@ -92,6 +77,33 @@ $(document).ready(function() {
     $("#message").text("computation time: " + (new Date().getTime() - start_time) + "ms")
 })
 
+function CombineParty(p, followers, required_ilv, max_ilv) {
+    var o = {}
+    o[p[0].party[0]] = 1;
+    o[p[0].party[1]] = 1;
+    o[p[0].party[2]] = 1;
+    
+    o[p[1].party[0]] = 1;
+    o[p[1].party[1]] = 1;
+    o[p[1].party[2]] = 1;
+    
+    o[p[2].party[0]] = 1;
+    o[p[2].party[1]] = 1;
+    o[p[2].party[2]] = 1;
+    
+    o[p[3].party[0]] = 1;
+    o[p[3].party[1]] = 1;
+    o[p[3].party[2]] = 1;
+
+    var keys = Object.keys(o)
+    var ilv_diff = 0
+    $.each(keys, function(i, x) {
+        ilv_diff += max_ilv - (followers[x].iLevel || 630)
+    })
+
+    return [keys, ilv_diff]
+}
+
 function MasterPlan(mission, output_table, limit) {
     var result = []
 
@@ -99,8 +111,9 @@ function MasterPlan(mission, output_table, limit) {
         for (var j = i + 1; j < my_followers.length; j++) {
             for (var k = j + 1; k < my_followers.length; k++) {
                 var score = MissionSuccessRate(
-                    { "ability": mission.ability.slice(0), "type": mission.type},
-                    [my_followers[i], my_followers[j], my_followers[k]]
+                    mission,
+                    [my_followers[i], my_followers[j], my_followers[k]],
+                    720
                 )
                 result.push({"score": score, "party": [i, j, k]})
             }
@@ -108,10 +121,13 @@ function MasterPlan(mission, output_table, limit) {
     }
 
     result.sort(function(x, y) { return y.score - x.score })
+    if (result.length > 0) {
+        var best_score = result[0].score
+        result = result.filter(function(r) { return r.score >= best_score - 30 })
+    }
 
     for (var i = 0; i < result.length; i++) {
         var r = result[i]
-        if (r.score < 690) break
         var tr = $("<tr>")
         tr.append("<td>" + (r.score * 100 / 720).toFixed(2) + "%</td>")
             .append($("<td>").text(r.score))
@@ -128,9 +144,7 @@ function MasterPlan(mission, output_table, limit) {
 function log_debug(message) {
 }
 
-function MissionSuccessRate(mission_mechanics, followers) {
-    var mission_score = 720;  // blackrock raid
-
+function MissionSuccessRate(mission_mechanics, followers, mission_score) {
     var my_score = 30 * followers.length
     var mission_type_countered = false
     var racial_bonus = 0
@@ -141,9 +155,17 @@ function MissionSuccessRate(mission_mechanics, followers) {
     var high_stamina = 0
     var burst_of_power = 0
     var combat_experience = 0
+    var dancer = 0
+
+    var ability_map = {}
+    $.each(mission_mechanics.ability, function(index, ability) {
+        ability_map[ability] = (ability_map[ability] || 0) + 1
+    });
 
     $.each(followers, function(index, follower) {
         log_debug("follower id: " + follower.garrFollowerID)
+
+        var is_dancer = false
         $.each(follower.ability, function(index2, ability) {
             var detail = g_garrison_abilities[ability.id]
             if (detail.trait) {
@@ -151,6 +173,7 @@ function MissionSuccessRate(mission_mechanics, followers) {
                 traits[ability.id] += 1
 
                 if (ability.id == 232) {  // dancer
+                    is_dancer = true
                 } else if (detail.category == 1 || detail.category == 6) {
                     // slayer / environment preference
                     if (detail.counters.indexOf(mission_mechanics.type) >= 0) {
@@ -164,18 +187,21 @@ function MissionSuccessRate(mission_mechanics, followers) {
                     }
                 }
             } else {
-                var counters = detail.counters
-                $.each(counters, function(index3, counter) {
-                    if (typeof(counter) == "undefined") return
-                    var pos = mission_mechanics.ability.indexOf(counter)
-                    if (pos >= 0) {
-                        log_debug(detail.name)
-                        delete mission_mechanics.ability[pos]
+                $.each(detail.counters, function(index3, counter) {
+                    var a = ability_map[counter]
+                    if (a) {
+                        ability_map[counter] -= 1
                         counter_bonus += 1
                     }
                 })
             }
         })
+
+        /*
+        if (is_dancer && follower.ability.indexOf(6) >= 0) {
+            dancer += 1
+        }
+        */
     })
 
     var time = 8 / Math.pow(2, (traits[221] || 0))
@@ -189,6 +215,7 @@ function MissionSuccessRate(mission_mechanics, followers) {
     if (mission_type_countered) my_score += 30
     my_score += racial_bonus * 45
     my_score += counter_bonus * 90
+    my_score += dancer * 45
 
     log_debug("my score: " + my_score)
 
