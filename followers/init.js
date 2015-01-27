@@ -19,6 +19,8 @@ function CreateFollowerTooltip(follower) {
 }
 
 $(document).ready(function() {
+    var start_time = new Date().getTime()
+
     var t454 = MasterPlan({ "ability": [6, 3, 10, 1, 2, 9, 7], "type": 18}, "#mission_table_454", 10)
     var t455 = MasterPlan({ "ability": [2, 6, 1, 3, 3, 10, 8], "type": 21}, "#mission_table_455", 10)
     var t456 = MasterPlan({ "ability": [4, 7, 6, 7, 4, 8, 3], "type": 24}, "#mission_table_456", 10)
@@ -86,6 +88,8 @@ $(document).ready(function() {
     $("tr:not(.used)", "#mission_table_455").hide()
     $("tr:not(.used)", "#mission_table_456").hide()
     $("tr:not(.used)", "#mission_table_457").hide()
+
+    $("#message").text("computation time: " + (new Date().getTime() - start_time) + "ms")
 })
 
 function MasterPlan(mission, output_table, limit) {
