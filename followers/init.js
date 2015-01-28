@@ -32,7 +32,7 @@ $(document).ready(function() {
         for (var j = 0; j < t455.length; j++) {
             for (var k = 0; k < t456.length; k++) {
                 for (var l = 0; l < t457.length; l++) {
-                    var result = CombineParty([t454[i], t455[j], t456[k], t457[l]], my_followers, 660, 670)
+                    var result = CombineParty([t454[i], t455[j], t456[k], t457[l]], my_followers, 660, 675, 720)
                     var keys = result[0]
                     var score = result[1]
                     if (score < best) {
@@ -77,28 +77,24 @@ $(document).ready(function() {
     $("#message").text("computation time: " + (new Date().getTime() - start_time) + "ms")
 })
 
-function CombineParty(p, followers, required_ilv, max_ilv) {
+function CombineParty(p, followers, required_ilv, max_ilv, required_score) {
     var o = {}
-    o[p[0].party[0]] = 1;
-    o[p[0].party[1]] = 1;
-    o[p[0].party[2]] = 1;
-    
-    o[p[1].party[0]] = 1;
-    o[p[1].party[1]] = 1;
-    o[p[1].party[2]] = 1;
-    
-    o[p[2].party[0]] = 1;
-    o[p[2].party[1]] = 1;
-    o[p[2].party[2]] = 1;
-    
-    o[p[3].party[0]] = 1;
-    o[p[3].party[1]] = 1;
-    o[p[3].party[2]] = 1;
+    var max_character_boost = Math.min(15, max_ilv - required_ilv)
+    var constraint = []
+
+    $.each(p, function(i, x) {
+        o[x.party[0]] = required_ilv;
+        o[x.party[1]] = required_ilv;
+        o[x.party[2]] = required_ilv;
+        var lower_bound = Math.min(required_score - x.score, max_character_boost * x.party.length)
+        if (lower_bound > 0) constraint.push({ "variables": x.party, "lower_bound": lower_bound })
+    })
 
     var keys = Object.keys(o)
+
     var ilv_diff = 0
     $.each(keys, function(i, x) {
-        ilv_diff += max_ilv - (followers[x].iLevel || 630)
+        ilv_diff += max_ilv - followers[x].iLevel
     })
 
     return [keys, ilv_diff]
