@@ -18,13 +18,23 @@ function CreateFollowerTooltip(follower) {
     return span.append(img).append(a)
 }
 
+function CreateFollowerPartyRow(party) {
+    var tr = $("<tr>")
+    tr.append("<td>" + (party.score * 100 / 720).toFixed(2) + "%</td>")
+        .append($("<td>").text(party.score))
+        .append($("<td>").append(CreateFollowerTooltip(my_followers[party.party[0]])))
+        .append($("<td>").append(CreateFollowerTooltip(my_followers[party.party[1]])))
+        .append($("<td>").append(CreateFollowerTooltip(my_followers[party.party[2]])))
+    return tr
+}
+
 $(document).ready(function() {
     var start_time = new Date().getTime()
 
-    var t454 = MasterPlan({ "ability": [6, 3, 10, 1, 2, 9, 7], "type": 18 }, "#mission_table_454", 10)
-    var t455 = MasterPlan({ "ability": [2, 6, 1, 3, 3, 10, 8], "type": 21 }, "#mission_table_455", 10)
-    var t456 = MasterPlan({ "ability": [4, 7, 6, 7, 4, 8, 3], "type": 24 }, "#mission_table_456", 10)
-    var t457 = MasterPlan({ "ability": [1, 2, 6, 3, 9, 10, 8], "type": 11 }, "#mission_table_457", 10)
+    var t454 = MasterPlan({ "ability": [6, 3, 10, 1, 2, 9, 7], "type": 18, "slot": 3 }, 10)
+    var t455 = MasterPlan({ "ability": [2, 6, 1, 3, 3, 10, 8], "type": 21, "slot": 3 }, 10)
+    var t456 = MasterPlan({ "ability": [4, 7, 6, 7, 4, 8, 3], "type": 24, "slot": 3 }, 10)
+    var t457 = MasterPlan({ "ability": [1, 2, 6, 3, 9, 10, 8], "type": 11, "slot": 3 }, 10)
 
     var best_list = []
     var best = 9999999
@@ -40,17 +50,17 @@ $(document).ready(function() {
                         best_list = []
                     }
                     if (score <= best) {
-                        var elements = [
-                            t454[i].element, 
-                            t455[j].element, 
-                            t456[k].element, 
-                            t457[l].element] 
-                        best_list.push({"party": party, "element": elements})
+                        var rows = [t454[i], t455[j], t456[k], t457[l]]
+                        best_list.push({"party": party, "rows": rows})
                     }
                 }
             }
         }
     }
+
+    var output_tables = ["#mission_table_454", "#mission_table_455",
+        "#mission_table_456", "#mission_table_457"]
+
     $.each(best_list, function(i, p) {
         var tr = $("<tr>")
         $.each(Object.keys(p.party), function(j, x) {
@@ -61,20 +71,23 @@ $(document).ready(function() {
         })
         tr.append($("<td>").text("+" + best + " iLevel"))
 
+        p.elements = []
+        for (var j = 0; j < p.rows.length; j++) {
+            if (typeof p.rows[j].element == "undefined") {
+                p.rows[j].element = CreateFollowerPartyRow(p.rows[j])
+                $(output_tables[j]).append(p.rows[j].element)
+            }
+            p.elements.push(p.rows[j].element)
+        }
+
+
         $(tr).hover(
-            function(){ $.each(p.element, function(i, e) { e.addClass("highlight") }) },
-            function(){ $.each(p.element, function(i, e) { e.removeClass("highlight") }) }
+            function(){ $.each(p.elements, function(i, e) { e.addClass("highlight") }) },
+            function(){ $.each(p.elements, function(i, e) { e.removeClass("highlight") }) }
         )
 
-        $.each(p.element, function(i, e) { e.addClass("used") })
-       
         $("#minimal_party").append(tr)
     })
-
-    $("tr:not(.used)", "#mission_table_454").hide()
-    $("tr:not(.used)", "#mission_table_455").hide()
-    $("tr:not(.used)", "#mission_table_456").hide()
-    $("tr:not(.used)", "#mission_table_457").hide()
 
     $("#message").text("computation time: " + (new Date().getTime() - start_time) + "ms")
 })
@@ -99,8 +112,11 @@ function CombineParty(p, followers, required_ilv, max_ilv, required_score) {
     return [o, ilv_diff]
 }
 
-function MasterPlan(mission, output_table, limit) {
+
+
+function MasterPlan(mission, limit) {
     var result = []
+    var mission_score = 90 * mission.ability + 30 * mission.slot
 
     for (var i = 0; i < my_followers.length; i++) {
         for (var j = i + 1; j < my_followers.length; j++) {
@@ -108,7 +124,7 @@ function MasterPlan(mission, output_table, limit) {
                 var score = MissionSuccessRate(
                     mission,
                     [my_followers[i], my_followers[j], my_followers[k]],
-                    720
+                    mission_score
                 )
                 result.push({"score": score, "party": [i, j, k]})
             }
@@ -119,18 +135,6 @@ function MasterPlan(mission, output_table, limit) {
     if (result.length > 0) {
         var best_score = result[0].score
         result = result.filter(function(r) { return r.score >= best_score - 30 })
-    }
-
-    for (var i = 0; i < result.length; i++) {
-        var r = result[i]
-        var tr = $("<tr>")
-        tr.append("<td>" + (r.score * 100 / 720).toFixed(2) + "%</td>")
-            .append($("<td>").text(r.score))
-            .append($("<td>").append(CreateFollowerTooltip(my_followers[r.party[0]])))
-            .append($("<td>").append(CreateFollowerTooltip(my_followers[r.party[1]])))
-            .append($("<td>").append(CreateFollowerTooltip(my_followers[r.party[2]])))
-        $(output_table).append(tr)
-        result[i].element = tr
     }
 
     return result
