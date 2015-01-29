@@ -32,8 +32,8 @@ $(document).ready(function() {
         for (var j = 0; j < t455.length; j++) {
             for (var k = 0; k < t456.length; k++) {
                 for (var l = 0; l < t457.length; l++) {
-                    var result = CombineParty([t454[i], t455[j], t456[k], t457[l]], my_followers, 660, 675, 720)
-                    var keys = result[0]
+                    var result = CombineParty([t454[i], t455[j], t456[k], t457[l]], my_followers, 660, 670, 720)
+                    var party = result[0]
                     var score = result[1]
                     if (score < best) {
                         best = score
@@ -45,7 +45,7 @@ $(document).ready(function() {
                             t455[j].element, 
                             t456[k].element, 
                             t457[l].element] 
-                        best_list.push({"party": keys, "element": elements})
+                        best_list.push({"party": party, "element": elements})
                     }
                 }
             }
@@ -53,11 +53,13 @@ $(document).ready(function() {
     }
     $.each(best_list, function(i, p) {
         var tr = $("<tr>")
-        $.each(p.party, function(j, x) {
+        $.each(Object.keys(p.party), function(j, x) {
             var td = $("<td>")
             td.append(CreateFollowerTooltip(my_followers[x]))
+            td.append($("<span>").text("(" + my_followers[x].iLevel + " -> " + p.party[x] + ")"))
             tr.append(td)
         })
+        tr.append($("<td>").text("+" + best + " iLevel"))
 
         $(tr).hover(
             function(){ $.each(p.element, function(i, e) { e.addClass("highlight") }) },
@@ -79,25 +81,22 @@ $(document).ready(function() {
 
 function CombineParty(p, followers, required_ilv, max_ilv, required_score) {
     var o = {}
-    var max_character_boost = Math.min(15, max_ilv - required_ilv)
-    var constraint = []
 
     $.each(p, function(i, x) {
-        o[x.party[0]] = required_ilv;
-        o[x.party[1]] = required_ilv;
-        o[x.party[2]] = required_ilv;
-        var lower_bound = Math.min(required_score - x.score, max_character_boost * x.party.length)
-        if (lower_bound > 0) constraint.push({ "variables": x.party, "lower_bound": lower_bound })
+        var target_ilv = required_ilv + Math.ceil((required_score - x.score) / 3)
+        target_ilv = Math.min(target_ilv, max_ilv)
+        o[x.party[0]] = Math.max(o[x.party[0]] || 0, target_ilv)
+        o[x.party[1]] = Math.max(o[x.party[1]] || 0, target_ilv)
+        o[x.party[2]] = Math.max(o[x.party[2]] || 0, target_ilv)
     })
 
     var keys = Object.keys(o)
-
     var ilv_diff = 0
     $.each(keys, function(i, x) {
-        ilv_diff += max_ilv - followers[x].iLevel
+        ilv_diff += o[x] - followers[x].iLevel
     })
 
-    return [keys, ilv_diff]
+    return [o, ilv_diff]
 }
 
 function MasterPlan(mission, output_table, limit) {
