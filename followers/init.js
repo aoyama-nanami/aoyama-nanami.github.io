@@ -116,7 +116,7 @@ function CombineParty(p, followers, required_ilv, max_ilv, required_score) {
 
 function MasterPlan(mission, limit) {
     var result = []
-    var mission_score = 90 * mission.ability + 30 * mission.slot
+    var mission_score = 90 * mission.ability.length + 30 * mission.slot
 
     for (var i = 0; i < my_followers.length; i++) {
         for (var j = i + 1; j < my_followers.length; j++) {
