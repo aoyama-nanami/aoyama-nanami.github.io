@@ -66,7 +66,7 @@ $(document).ready(function() {
         $.each(Object.keys(p.party), function(j, x) {
             var td = $("<td>")
             td.append(CreateFollowerTooltip(my_followers[x]))
-            td.append($("<span>").text("(" + my_followers[x].iLevel + " -> " + p.party[x] + ")"))
+            td.append($("<span>").html("(" + my_followers[x].iLevel + " &#8594; " + p.party[x] + ")"))
             tr.append(td)
         })
         tr.append($("<td>").text("+" + best + " iLevel"))
