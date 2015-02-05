@@ -79,7 +79,8 @@ function Compute(missions, required_ilv, max_ilv) {
 
         best_list.forEach(function(p, i) {
             var tr = $("<tr>")
-            Object.keys(p.party).forEach(function(x, j) {
+
+            Object.keys(p.party).forEach(function(x) {
                 var td = $("<td>")
                 td.append(CreateFollowerTooltip(my_followers[x]))
                 if (my_followers[x].iLevel != p.party[x]) {

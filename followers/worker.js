@@ -11,7 +11,8 @@ function CombineParty(p, followers, required_ilv, max_ilv, missions) {
 
     var ilv_diff = 0
     Object.keys(o).forEach(function(x){
-        ilv_diff += o[x] - followers[x].iLevel
+        ilv_diff += Math.max(o[x] - followers[x].iLevel, 0)
+    
     })
 
     return [o, ilv_diff]
@@ -138,7 +139,7 @@ onmessage = function(e) {
     var candidates = missions.map(function(c){
         return MasterPlan(c, followers, garrison_abilities, garrison_followers)
     })
-    var indexes = missions.map(function(){ return 0 })
+    var indexes = new Int32Array(missions.length)
     var best_list = []
     var best = 9999999
 
@@ -155,7 +156,10 @@ onmessage = function(e) {
     }
 
     do {
-        var rows = indexes.map(function(x, i){ return candidates[i][x] })
+        var rows = []
+        for (var i = 0; i < indexes.length; i++) {
+            rows.push(candidates[i][indexes[i]])
+        }
         var result = CombineParty(rows, followers, required_ilv, max_ilv, missions)
         var party = result[0]
         var score = result[1]
