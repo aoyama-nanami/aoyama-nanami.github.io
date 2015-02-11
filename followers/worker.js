@@ -18,8 +18,6 @@ function CombineParty(p, followers, required_ilv, max_ilv, missions) {
     return [o, ilv_diff]
 }
 
-
-
 function MasterPlan(mission, followers, garrison_abilities, garrison_followers) {
     var result = []
 
@@ -142,6 +140,9 @@ onmessage = function(e) {
     var indexes = new Int32Array(missions.length)
     var best_list = []
     var best = 9999999
+
+    var num_combinations = candidates.reduce(function(x, a){ return x * a.length }, 1)
+    postMessage({"message": "possible combinations: " + num_combinations})
 
     function NextPermutation(a, c) {
         for (var i = 0; i < a.length; i++) {

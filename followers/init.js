@@ -43,8 +43,26 @@ $(document).ready(function() {
         {"slot": 3, "type": 29, "id": 324, "ability": [8, 6, 1, 9, 10, 9]},
     ]
 
-    // Compute(highmaul_missions, 645, 655)
-    Compute(blackrock_missions, 660, 670)
+    var elemental_rune_missions = [
+        {"slot": 3, "type": 11, "id": 408, "ability": [7, 3, 6, 2, 10, 1]},
+        {"slot": 3, "type": 22, "id": 409, "ability": [1, 6, 9, 2, 9, 3]},
+        {"slot": 3, "type": 16, "id": 410, "ability": [4, 2, 3, 9, 8]},
+        {"slot": 3, "type": 29, "id": 411, "ability": [2, 9, 3, 8, 3, 6]},
+        {"slot": 3, "type": 24, "id": 412, "ability": [7, 2, 3, 2, 9, 3]},
+        {"slot": 3, "type": 27, "id": 413, "ability": [7, 2, 6, 1, 4, 8]},
+    ]
+
+    var button_factory = function(name, missions, required_ilv, max_ilv) {
+        var button = $("<button>")
+            .text(name)
+            .addClass("request_worker")
+            .click(function(){Compute(missions, required_ilv, max_ilv)})
+        $("#button_container").append(button)
+    }
+
+    button_factory("blckrock", blackrock_missions, 660, 670)
+    button_factory("highmaul", highmaul_missions, 645, 655)
+    button_factory("elemental rune", elemental_rune_missions, 645, 655)
 })
 
 function Compute(missions, required_ilv, max_ilv) {
@@ -52,6 +70,8 @@ function Compute(missions, required_ilv, max_ilv) {
 
     var container = $("#result_container")
     container.empty()
+    $("#minimal_party, #message").empty()
+    $("button.request_worker").prop("disabled", true)
 
     for (var i = 0; i < missions.length; i++) {
         missions[i].score = 90 * missions[i].ability.length + 30 * missions[i].slot
@@ -76,6 +96,13 @@ function Compute(missions, required_ilv, max_ilv) {
     worker.onmessage = function(e) {
         var best_list = e.data.best_list
         var best = e.data.best_score
+
+        var message = e.data.message
+        if (message) {
+            $("#message").append([$("<span>").text(message), "<br/>"])
+        }
+
+        if (best_list == undefined) return
 
         best_list.forEach(function(p, i) {
             var tr = $("<tr>")
@@ -109,8 +136,9 @@ function Compute(missions, required_ilv, max_ilv) {
             $("#minimal_party").append(tr)
         })
 
-        $("#message").text("computation time: " + (new Date().getTime() - start_time) + "ms")
-
+        var span = $("<span>").text("computation time: " + (new Date().getTime() - start_time) + "ms")
+        $("#message").append([span, "<br/>"])
+        $("button.request_worker").prop("disabled", false)
         $WowheadPower.refreshLinks()
     }
 

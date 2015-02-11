@@ -1,6 +1,6 @@
 import urllib2, json
 
-for i in range(454, 458) :
+for i in range(408, 414) :
     html = urllib2.urlopen("http://www.wowhead.com/mission=" + str(i)).read().split("\n")
     for line in html :
         if "new MissionCalc" in line : 
@@ -15,4 +15,4 @@ for i in range(454, 458) :
             for _, e in o["encounters"].iteritems() :
                 for _, m in e["mechanics"].iteritems() :
                     o2["ability"].append(m["type"])
-            print json.dumps(o2)
+            print json.dumps(o2) + ","
