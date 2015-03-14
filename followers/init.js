@@ -22,35 +22,43 @@ function CreateFollowerPartyRow(party, required_score) {
     var tr = $("<tr>")
     tr.append("<td>" + (party.score * 100 / required_score).toFixed(2) + "%</td>")
         .append($("<td>").text(party.score))
-        .append($("<td>").append(CreateFollowerTooltip(my_followers[party.party[0]])))
-        .append($("<td>").append(CreateFollowerTooltip(my_followers[party.party[1]])))
-        .append($("<td>").append(CreateFollowerTooltip(my_followers[party.party[2]])))
+    for (var i = 0; i < party.party.length; i++) {
+        tr.append($("<td>").append(CreateFollowerTooltip(my_followers[party.party[i]])))
+    }
     return tr
 }
 
+
+function GetMissionList() {
+    var get_mission = function(id) {
+        var raw_data = missions[id]
+        var ability = []
+
+        for (var i in raw_data.encounters) {
+            var mechanics = raw_data.encounters[i].mechanics
+            for (var j in mechanics) {
+                ability.push(mechanics[j].type)
+            }
+        }
+
+        return {
+            "id": id,
+            "slot": raw_data.followers,
+            "type": raw_data.mechanics.type,
+            "ability": ability,
+            "name": raw_data.name,
+        }
+    }
+
+    return Array.prototype.map.call(arguments, get_mission)
+}
+
 $(document).ready(function() {
-    var blackrock_missions = [
-        {"slot": 3, "type": 18, "id": 454, "ability": [3, 6, 1, 2, 10, 7, 9]},
-        {"slot": 3, "type": 21, "id": 455, "ability": [2, 6, 1, 3, 10, 8, 3]},
-        {"slot": 3, "type": 24, "id": 456, "ability": [4, 3, 8, 4, 7, 7, 6]},
-        {"slot": 3, "type": 11, "id": 457, "ability": [1, 10, 3, 6, 9, 8, 2]},
-    ]
-
-    var highmaul_missions = [
-        {"slot": 3, "type": 28, "id": 321, "ability": [8, 6, 1, 9, 2, 10]},
-        {"slot": 3, "type": 17, "id": 322, "ability": [3, 6, 4, 7, 1, 3]},
-        {"slot": 3, "type": 12, "id": 323, "ability": [4, 7, 2, 10, 10, 9]},
-        {"slot": 3, "type": 29, "id": 324, "ability": [8, 6, 1, 9, 10, 9]},
-    ]
-
-    var elemental_rune_missions = [
-        {"slot": 3, "type": 11, "id": 408, "ability": [7, 3, 6, 2, 10, 1]},
-        {"slot": 3, "type": 22, "id": 409, "ability": [1, 6, 9, 2, 9, 3]},
-        {"slot": 3, "type": 16, "id": 410, "ability": [4, 2, 3, 9, 8]},
-        {"slot": 3, "type": 29, "id": 411, "ability": [2, 9, 3, 8, 3, 6]},
-        {"slot": 3, "type": 24, "id": 412, "ability": [7, 2, 3, 2, 9, 3]},
-        {"slot": 3, "type": 27, "id": 413, "ability": [7, 2, 6, 1, 4, 8]},
-    ]
+    var blackrock_missions = GetMissionList(454, 455, 456, 457)
+    var highmaul_missions = GetMissionList(321, 322, 323, 324)
+    var elemental_rune_missions = GetMissionList(408, 409, 410, 411, 412, 413)
+    var lessons_of_the_blade = GetMissionList(503)
+    var apexis_crystal_missions = GetMissionList(391, 399)
 
     var button_factory = function(name, missions, required_ilv, max_ilv) {
         var button = $("<button>")
@@ -60,9 +68,11 @@ $(document).ready(function() {
         $("#button_container").append(button)
     }
 
-    button_factory("blckrock", blackrock_missions, 660, 670)
-    button_factory("highmaul", highmaul_missions, 645, 655)
-    button_factory("elemental rune", elemental_rune_missions, 645, 655)
+    button_factory("blckrock", blackrock_missions, 660, 675)
+    button_factory("highmaul", highmaul_missions, 645, 660)
+    button_factory("elemental rune", elemental_rune_missions, 645, 660)
+    button_factory("retrain", lessons_of_the_blade, 675, 675)
+    button_factory("apexis crystal", apexis_crystal_missions, 675, 675)
 })
 
 function Compute(missions, required_ilv, max_ilv) {
@@ -94,51 +104,21 @@ function Compute(missions, required_ilv, max_ilv) {
     var output_tables = missions.map(function(m){ return m.element })
 
     worker.onmessage = function(e) {
-        var best_list = e.data.best_list
-        var best = e.data.best_score
-
         var message = e.data.message
         if (message) {
             $("#message").append([$("<span>").text(message), "<br/>"])
         }
 
-        if (best_list == undefined) return
+        var candidates = e.data.candidates
+        if (candidates == undefined) return
 
-        best_list.forEach(function(p, i) {
-            var tr = $("<tr>")
-
-            Object.keys(p.party).forEach(function(x) {
-                var td = $("<td>")
-                td.append(CreateFollowerTooltip(my_followers[x]))
-                if (my_followers[x].iLevel != p.party[x]) {
-                    td.append($("<span>").html("(" + my_followers[x].iLevel + " &#8594; " + p.party[x] + ")"))
-                } else {
-                    td.append($("<span>").text("(" + p.party[x] + ")"))
-                }
-                tr.append(td)
+        console.log(candidates)
+        candidates.forEach(function(parties, i) {
+            parties.forEach(function(x, j) {
+                var e = CreateFollowerPartyRow(x, missions[i].score)
+                $(output_tables[i]).append(e)
             })
-            tr.append($("<td>").text("+" + best + " iLevel"))
-
-            p.elements = []
-            for (var j = 0; j < p.rows.length; j++) {
-                if (typeof p.rows[j].element == "undefined") {
-                    p.rows[j].element = CreateFollowerPartyRow(p.rows[j], missions[j].score)
-                    $(output_tables[j]).append(p.rows[j].element)
-                }
-                p.elements.push(p.rows[j].element)
-            }
-
-            $(tr).hover(
-                function(){ $.each(p.elements, function(i, e) { e.addClass("highlight") }) },
-                function(){ $.each(p.elements, function(i, e) { e.removeClass("highlight") }) }
-            )
-
-            $("#minimal_party").append(tr)
         })
-
-        var span = $("<span>").text("computation time: " + (new Date().getTime() - start_time) + "ms")
-        $("#message").append([span, "<br/>"])
-        $("button.request_worker").prop("disabled", false)
         $WowheadPower.refreshLinks()
     }
 

@@ -1,6 +1,5 @@
 env = Environment(parse_flags = "-O3 -pedantic -Wall -Wvla -Wold-style-cast -std=c++1y")  # Initialize the environment
 
-env.Append(CPPPATH = ["./jsoncpp/include"])
-env.Append(LIBS = [File('./jsoncpp/libs/linux-gcc-4.9.2/libjson_linux-gcc-4.9.2_libmt.a')])
+env.Append(LIBS = [File('./libjson.a')])
 
 Default(env.Program('main', ['main.cpp']))

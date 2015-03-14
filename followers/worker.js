@@ -21,17 +21,32 @@ function CombineParty(p, followers, required_ilv, max_ilv, missions) {
 function MasterPlan(mission, followers, garrison_abilities, garrison_followers) {
     var result = []
 
-    for (var i = 0; i < followers.length; i++) {
-        for (var j = i + 1; j < followers.length; j++) {
-            for (var k = j + 1; k < followers.length; k++) {
+    if (mission.slot == 3) {
+        for (var i = 0; i < followers.length; i++) {
+            for (var j = i + 1; j < followers.length; j++) {
+                for (var k = j + 1; k < followers.length; k++) {
+                    var score = MissionSuccessRate(
+                        mission,
+                        [followers[i], followers[j], followers[k]],
+                        mission.score,
+                        garrison_abilities,
+                        garrison_followers
+                    )
+                    result.push({"score": score, "party": [i, j, k]})
+                }
+            }
+        }
+    } else {
+        for (var i = 0; i < followers.length; i++) {
+            for (var j = i + 1; j < followers.length; j++) {
                 var score = MissionSuccessRate(
                     mission,
-                    [followers[i], followers[j], followers[k]],
+                    [followers[i], followers[j]],
                     mission.score,
                     garrison_abilities,
                     garrison_followers
                 )
-                result.push({"score": score, "party": [i, j, k]})
+                result.push({"score": score, "party": [i, j]})
             }
         }
     }
@@ -137,41 +152,6 @@ onmessage = function(e) {
     var candidates = missions.map(function(c){
         return MasterPlan(c, followers, garrison_abilities, garrison_followers)
     })
-    var indexes = new Int32Array(missions.length)
-    var best_list = []
-    var best = 9999999
 
-    var num_combinations = candidates.reduce(function(x, a){ return x * a.length }, 1)
-    postMessage({"message": "possible combinations: " + num_combinations})
-
-    function NextPermutation(a, c) {
-        for (var i = 0; i < a.length; i++) {
-            a[i]++
-            if (a[i] == c[i].length) {
-                a[i] = 0
-            } else {
-                return true
-            }
-        }
-        return false
-    }
-
-    do {
-        var rows = []
-        for (var i = 0; i < indexes.length; i++) {
-            rows.push(candidates[i][indexes[i]])
-        }
-        var result = CombineParty(rows, followers, required_ilv, max_ilv, missions)
-        var party = result[0]
-        var score = result[1]
-        if (score < best) {
-            best = score
-            best_list = []
-        }
-        if (score <= best) {
-            best_list.push({"party": party, "rows": rows})
-        }
-    } while (NextPermutation(indexes, candidates))
-
-    postMessage({"best_score": best, "best_list": best_list})
+    postMessage({"candidates": candidates})
 }
